@@ -11,7 +11,7 @@ import (
 func WriteLines(filePath string, lines []string) error {
 
 	//	打开文件
-	file, err := openForWrite(filePath)
+	file, err := OpenForWrite(filePath)
 	if err != nil {
 		return err
 	}
@@ -33,7 +33,7 @@ func WriteLines(filePath string, lines []string) error {
 func WriteString(filePath, content string) error {
 
 	//	打开文件
-	file, err := openForWrite(filePath)
+	file, err := OpenForWrite(filePath)
 	if err != nil {
 		return err
 	}
@@ -47,7 +47,7 @@ func WriteString(filePath, content string) error {
 //	写入缓冲区
 func WriteBytes(filePath string, buffer []byte) error {
 	//	打开文件
-	file, err := openForWrite(filePath)
+	file, err := OpenForWrite(filePath)
 	if err != nil {
 		return err
 	}
@@ -63,18 +63,18 @@ func EnsureDir(dir string) error {
 	if IsExists(dir) {
 		return nil
 	}
-	
+
 	//	递推
 	err := EnsureDir(filepath.Dir(dir))
 	if err != nil {
 		return err
 	}
-	
+
 	return os.Mkdir(dir, 0666)
 }
 
 //	打开文件
-func openForWrite(filePath string) (*os.File, error) {
+func OpenForWrite(filePath string) (*os.File, error) {
 
 	//	保证文件所处目录是否存在
 	err := EnsureDir(filepath.Dir(filePath))
@@ -87,7 +87,7 @@ func openForWrite(filePath string) (*os.File, error) {
 }
 
 //	打开文件
-func openForRead(filePath string) (*os.File, error) {
+func OpenForRead(filePath string) (*os.File, error) {
 	//	检查文件
 	_, err := os.Stat(filePath)
 	if err != nil {
@@ -101,7 +101,7 @@ func openForRead(filePath string) (*os.File, error) {
 //	读取文件
 func ReadLines(filePath string) ([]string, error) {
 	//	打开文件
-	file, err := openForRead(filePath)
+	file, err := OpenForRead(filePath)
 	if err != nil {
 		return nil, err
 	}
@@ -120,7 +120,7 @@ func ReadLines(filePath string) ([]string, error) {
 //	读取所有
 func ReadAllBytes(filePath string) ([]byte, error) {
 	//	打开文件
-	file, err := openForRead(filePath)
+	file, err := OpenForRead(filePath)
 	if err != nil {
 		return nil, err
 	}
