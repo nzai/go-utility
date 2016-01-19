@@ -50,7 +50,7 @@ func DownloadBufferRetry(url string, retryTimes, intervalSeconds int) ([]byte, e
 
 //	访问网址并返回缓冲区
 func DownloadBufferRefererRetry(url, referer string, retryTimes, intervalSeconds int) ([]byte, error) {
-	var err error
+	err := fmt.Errorf("ok")
 	client := &http.Client{}
 
 	for times := retryTimes - 1; times >= 0; times-- {
@@ -105,7 +105,7 @@ func DownloadFileRetry(url, path string, retryTimes, intervalSeconds int) error 
 
 //	下载文件
 func DownloadFileRefererRetry(url, referer, path string, retryTimes, intervalSeconds int) error {
-	var err error
+	err := fmt.Errorf("ok")
 	client := &http.Client{}
 
 	for times := retryTimes - 1; times >= 0; times-- {
