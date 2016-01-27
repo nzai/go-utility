@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"log"
 	"net/http"
+	"os"
 	"time"
 
 	gio "github.com/nzai/go-utility/io"
@@ -105,32 +106,14 @@ func DownloadFileRetry(url, path string, retryTimes, intervalSeconds int) error 
 
 //	下载文件
 func DownloadFileRefererRetry(url, referer, path string, retryTimes, intervalSeconds int) error {
+	
 	err := fmt.Errorf("ok")
-	client := &http.Client{}
-
+	tempPath := path + ".downloading"
 	for times := retryTimes - 1; times >= 0; times-- {
-		//	构造请求
-		request, err := http.NewRequest("GET", url, nil)
+
+		err = downloadFileRefererOnce(url, referer, tempPath)
 		if err == nil {
-			//	引用页
-			if referer != "" {
-				request.Header.Set("Referer", referer)
-			}
-
-			//	发送请求
-			response, err := client.Do(request)
-			if err == nil {
-				defer response.Body.Close()
-
-				//	打开文件
-				file, err := gio.OpenForWrite(path)
-				if err == nil {
-					//	写文件
-					_, err := io.Copy(file, response.Body)
-					return err
-				}
-
-			}
+			return os.Rename(tempPath, path)
 		}
 
 		if times > 0 {
@@ -143,5 +126,42 @@ func DownloadFileRefererRetry(url, referer, path string, retryTimes, intervalSec
 		}
 	}
 
+	//	删除临时文件
+	os.Remove(tempPath)
+
 	return fmt.Errorf("访问%s出错，已重试%d次，不再重试:%s", url, retryTimes, err.Error())
+}
+
+func downloadFileRefererOnce(url, referer, path string) error {
+	//	构造请求
+	request, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return err
+	}
+
+	//	引用页
+	if referer != "" {
+		request.Header.Set("Referer", referer)
+	}
+
+	//	发送请求
+	client := &http.Client{}
+	response, err := client.Do(request)
+	if err != nil {
+		return err
+	}
+	defer response.Body.Close()
+
+	//	tempPath := path + ".downloading"
+
+	//	打开文件
+	file, err := gio.OpenForWrite(path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	//	写文件
+	_, err = io.Copy(file, response.Body)
+	return err
 }
