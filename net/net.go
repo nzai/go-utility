@@ -52,28 +52,12 @@ func DownloadBufferRetry(url string, retryTimes, intervalSeconds int) ([]byte, e
 //	访问网址并返回缓冲区
 func DownloadBufferRefererRetry(url, referer string, retryTimes, intervalSeconds int) ([]byte, error) {
 	err := fmt.Errorf("ok")
-	client := &http.Client{}
 
 	for times := retryTimes - 1; times >= 0; times-- {
-		//	构造请求
-		request, err := http.NewRequest("GET", url, nil)
+
+		buffer, err := DownloadBufferRefererOnce(url, referer)
 		if err == nil {
-			//	引用页
-			if referer != "" {
-				request.Header.Set("Referer", referer)
-			}
-
-			//	发送请求
-			response, err := client.Do(request)
-			if err == nil {
-				defer response.Body.Close()
-
-				//	读取结果
-				buffer, err := ioutil.ReadAll(response.Body)
-				if err == nil {
-					return buffer, nil
-				}
-			}
+			return buffer, err
 		}
 
 		if times > 0 {
@@ -87,6 +71,32 @@ func DownloadBufferRefererRetry(url, referer string, retryTimes, intervalSeconds
 	}
 
 	return nil, fmt.Errorf("访问%s出错，已重试%d次，不再重试:%s", url, retryTimes, err.Error())
+}
+
+//	访问网址并返回缓冲区
+func DownloadBufferRefererOnce(url, referer string) ([]byte, error) {
+	//	构造请求
+	request, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	//	引用页
+	if referer != "" {
+		request.Header.Set("Referer", referer)
+	}
+
+	//	发送请求
+	client := &http.Client{}
+	client.Timeout = time.Second * 10
+	response, err := client.Do(request)
+	if err != nil {
+		return nil, err
+	}
+	defer response.Body.Close()
+
+	//	读取结果
+	return ioutil.ReadAll(response.Body)
 }
 
 //	下载文件
@@ -106,7 +116,7 @@ func DownloadFileRetry(url, path string, retryTimes, intervalSeconds int) error 
 
 //	下载文件
 func DownloadFileRefererRetry(url, referer, path string, retryTimes, intervalSeconds int) error {
-	
+
 	err := fmt.Errorf("ok")
 	tempPath := path + ".downloading"
 	for times := retryTimes - 1; times >= 0; times-- {
@@ -118,7 +128,7 @@ func DownloadFileRefererRetry(url, referer, path string, retryTimes, intervalSec
 
 		if times > 0 {
 			if err != nil {
-				log.Printf("访问%s出错，还有%d次重试机会，%d秒后重试:%s", url, times, intervalSeconds, err.Error())
+				log.Printf("下载%s出错，还有%d次重试机会，%d秒后重试:%s", url, times, intervalSeconds, err.Error())
 			}
 
 			//	延时
@@ -129,9 +139,10 @@ func DownloadFileRefererRetry(url, referer, path string, retryTimes, intervalSec
 	//	删除临时文件
 	os.Remove(tempPath)
 
-	return fmt.Errorf("访问%s出错，已重试%d次，不再重试:%s", url, retryTimes, err.Error())
+	return fmt.Errorf("下载%s出错，已重试%d次，不再重试:%s", url, retryTimes, err.Error())
 }
 
+//	下载文件
 func downloadFileRefererOnce(url, referer, path string) error {
 	//	构造请求
 	request, err := http.NewRequest("GET", url, nil)
@@ -146,6 +157,7 @@ func downloadFileRefererOnce(url, referer, path string) error {
 
 	//	发送请求
 	client := &http.Client{}
+	client.Timeout = time.Second * 10
 	response, err := client.Do(request)
 	if err != nil {
 		return err
