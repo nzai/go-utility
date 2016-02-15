@@ -88,7 +88,7 @@ func DownloadBufferRefererOnce(url, referer string) ([]byte, error) {
 
 	//	发送请求
 	client := &http.Client{}
-	client.Timeout = time.Second * 10
+	//	client.Timeout = time.Second * 20
 	response, err := client.Do(request)
 	if err != nil {
 		return nil, err
@@ -157,7 +157,7 @@ func downloadFileRefererOnce(url, referer, path string) error {
 
 	//	发送请求
 	client := &http.Client{}
-	client.Timeout = time.Second * 10
+//	client.Timeout = time.Second * 15
 	response, err := client.Do(request)
 	if err != nil {
 		return err
