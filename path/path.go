@@ -4,11 +4,16 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
-//	获取起始目录
+// GetStartupDir 获取起始目录
 func GetStartupDir() (string, error) {
-	
+
+	if strings.HasPrefix(os.Args[0], ".\\") {
+		return os.Getwd()
+	}
+
 	startupPath, err := exec.LookPath(os.Args[0])
 	if err != nil {
 		return "", err
