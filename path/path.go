@@ -10,7 +10,7 @@ import (
 // GetStartupDir 获取起始目录
 func GetStartupDir() (string, error) {
 
-	if strings.HasPrefix(os.Args[0], ".\\") {
+	if strings.HasPrefix(os.Args[0], "./") {
 		return os.Getwd()
 	}
 
