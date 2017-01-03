@@ -2,12 +2,14 @@ package io
 
 import (
 	"bufio"
+	"bytes"
+	"compress/gzip"
 	"io/ioutil"
 	"os"
 	"path/filepath"
 )
 
-//	写文件
+// WriteLines 写文件
 func WriteLines(filePath string, lines []string) error {
 
 	//	打开文件
@@ -29,7 +31,7 @@ func WriteLines(filePath string, lines []string) error {
 	return nil
 }
 
-//	写入字符串
+// WriteString 写入字符串
 func WriteString(filePath, content string) error {
 
 	//	打开文件
@@ -44,8 +46,8 @@ func WriteString(filePath, content string) error {
 	return err
 }
 
-//	写入缓冲区
-func WriteBytes(filePath string, buffer []byte) error {
+// WriteBytes 写入数据
+func WriteBytes(filePath string, data []byte) error {
 	//	打开文件
 	file, err := OpenForWrite(filePath)
 	if err != nil {
@@ -53,12 +55,37 @@ func WriteBytes(filePath string, buffer []byte) error {
 	}
 	defer file.Close()
 
-	_, err = file.Write(buffer)
+	_, err = file.Write(data)
 
 	return err
 }
 
-//	保证目录存在
+// WriteGzipBytes 压缩数据并写入文件
+func WriteGzipBytes(filePath string, data []byte) error {
+
+	// gzip 最高压缩
+	buffer := new(bytes.Buffer)
+	w, err := gzip.NewWriterLevel(buffer, gzip.BestCompression)
+	if err != nil {
+		return err
+	}
+	_, err = w.Write(data)
+	if err != nil {
+		return err
+	}
+	w.Flush()
+	w.Close()
+
+	zipped, err := ioutil.ReadAll(buffer)
+	if err != nil {
+		return err
+	}
+
+	// 存盘
+	return WriteBytes(filePath, zipped)
+}
+
+// EnsureDir 保证目录存在
 func EnsureDir(dir string) error {
 	if IsExists(dir) {
 		return nil
@@ -73,7 +100,7 @@ func EnsureDir(dir string) error {
 	return os.Mkdir(dir, 0666)
 }
 
-//	打开文件
+// OpenForWrite 打开文件以便写入
 func OpenForWrite(filePath string) (*os.File, error) {
 
 	//	保证文件所处目录是否存在
@@ -86,7 +113,7 @@ func OpenForWrite(filePath string) (*os.File, error) {
 	return os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY, 0666)
 }
 
-//	打开文件
+// OpenForRead 打开文件一遍读取
 func OpenForRead(filePath string) (*os.File, error) {
 	//	检查文件
 	_, err := os.Stat(filePath)
@@ -98,7 +125,7 @@ func OpenForRead(filePath string) (*os.File, error) {
 	return os.OpenFile(filePath, os.O_RDONLY, 0666)
 }
 
-//	读取文件
+// ReadLines 从文件中读取字符串数组
 func ReadLines(filePath string) ([]string, error) {
 	//	打开文件
 	file, err := OpenForRead(filePath)
@@ -117,7 +144,7 @@ func ReadLines(filePath string) ([]string, error) {
 	return lines, scanner.Err()
 }
 
-//	读取所有
+// ReadAllBytes 从文件中读取数据
 func ReadAllBytes(filePath string) ([]byte, error) {
 	//	打开文件
 	file, err := OpenForRead(filePath)
@@ -129,7 +156,25 @@ func ReadAllBytes(filePath string) ([]byte, error) {
 	return ioutil.ReadAll(file)
 }
 
-//	读取所有
+// ReadAllGzipBytes 从文件中读取Gzip压缩所属
+func ReadAllGzipBytes(filePath string) ([]byte, error) {
+
+	file, err := os.Open(filePath)
+	if err != nil {
+		return nil, err
+	}
+	defer file.Close()
+
+	reader, err := gzip.NewReader(file)
+	if err != nil {
+		return nil, err
+	}
+	defer reader.Close()
+
+	return ReadAllBytes(filePath)
+}
+
+// ReadAllString 从文件中读取字符串
 func ReadAllString(filePath string) (string, error) {
 	buffer, err := ReadAllBytes(filePath)
 	if err != nil {
@@ -139,7 +184,7 @@ func ReadAllString(filePath string) (string, error) {
 	return string(buffer), nil
 }
 
-//	判断文件是否存在
+// IsExists 判断文件是否存在
 func IsExists(filePath string) bool {
 	_, err := os.Stat(filePath)
 	return !os.IsNotExist(err)
