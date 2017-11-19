@@ -9,7 +9,7 @@ import (
 func WriteBytes(w io.Writer, buffer []byte) (int, error) {
 
 	bufferLength := len(buffer)
-	lengthSize, err := WriteInt64(w, int64(bufferLength))
+	lengthSize, err := WriteUint64(w, uint64(bufferLength))
 	if err != nil {
 		return 0, err
 	}
