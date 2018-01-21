@@ -3,6 +3,7 @@ package ioutil
 import (
 	"encoding/binary"
 	"io"
+	"time"
 )
 
 // WriteBytes 写入bytes
@@ -58,4 +59,20 @@ func WriteUint64(w io.Writer, value uint64) (int, error) {
 // WriteString 写入字符串
 func WriteString(w io.Writer, text string) (int, error) {
 	return WriteBytes(w, []byte(text))
+}
+
+// WriteTime 写入时间
+func WriteTime(w io.Writer, value time.Time) (int, error) {
+
+	unixSize, err := WriteUint64(w, uint64(value.Unix()))
+	if err != nil {
+		return 0, err
+	}
+
+	locationSize, err := WriteString(w, value.Location().String())
+	if err != nil {
+		return 0, err
+	}
+
+	return unixSize + locationSize, nil
 }

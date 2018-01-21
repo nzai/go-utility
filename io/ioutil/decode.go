@@ -3,6 +3,7 @@ package ioutil
 import (
 	"encoding/binary"
 	"io"
+	"time"
 )
 
 // ReadUint8 读取uint8
@@ -68,4 +69,26 @@ func ReadString(r io.Reader) (string, error) {
 	}
 
 	return string(buffer), nil
+}
+
+// ReadTime 读取时间
+func ReadTime(r io.Reader) (time.Time, error) {
+
+	unix, err := ReadUint64(r)
+	if err != nil {
+		return time.Time{}, err
+	}
+	value := time.Unix(int64(unix), 0)
+
+	locationName, err := ReadString(r)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	location, err := time.LoadLocation(locationName)
+	if err != nil {
+		return time.Time{}, err
+	}
+
+	return value.In(location), nil
 }
