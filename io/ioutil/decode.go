@@ -10,9 +10,13 @@ import (
 func ReadUint8(r io.Reader) (uint8, error) {
 
 	buffer := make([]byte, 1)
-	_, err := r.Read(buffer)
+	read, err := r.Read(buffer)
 	if err != nil {
 		return 0, err
+	}
+
+	if read != 1 {
+		return 0, io.ErrUnexpectedEOF
 	}
 
 	return uint8(buffer[0]), nil
@@ -22,9 +26,13 @@ func ReadUint8(r io.Reader) (uint8, error) {
 func ReadUint16(r io.Reader) (uint16, error) {
 
 	buffer := make([]byte, 2)
-	_, err := r.Read(buffer)
+	read, err := r.Read(buffer)
 	if err != nil {
 		return 0, err
+	}
+
+	if read != 2 {
+		return 0, io.ErrUnexpectedEOF
 	}
 
 	return binary.BigEndian.Uint16(buffer), nil
@@ -34,9 +42,13 @@ func ReadUint16(r io.Reader) (uint16, error) {
 func ReadUint32(r io.Reader) (uint32, error) {
 
 	buffer := make([]byte, 4)
-	_, err := r.Read(buffer)
+	read, err := r.Read(buffer)
 	if err != nil {
 		return 0, err
+	}
+
+	if read != 4 {
+		return 0, io.ErrUnexpectedEOF
 	}
 
 	return binary.BigEndian.Uint32(buffer), nil
@@ -46,9 +58,13 @@ func ReadUint32(r io.Reader) (uint32, error) {
 func ReadUint64(r io.Reader) (uint64, error) {
 
 	buffer := make([]byte, 8)
-	_, err := r.Read(buffer)
+	read, err := r.Read(buffer)
 	if err != nil {
 		return 0, err
+	}
+
+	if read != 8 {
+		return 0, io.ErrUnexpectedEOF
 	}
 
 	return binary.BigEndian.Uint64(buffer), nil
@@ -62,10 +78,14 @@ func ReadString(r io.Reader) (string, error) {
 		return "", err
 	}
 
-	buffer := make([]byte, size)
-	_, err = r.Read(buffer)
+	buffer := make([]byte, int(size))
+	read, err := r.Read(buffer)
 	if err != nil {
 		return "", err
+	}
+
+	if read != int(size) {
+		return "", io.ErrUnexpectedEOF
 	}
 
 	return string(buffer), nil

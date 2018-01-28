@@ -15,9 +15,13 @@ func WriteBytes(w io.Writer, buffer []byte) (int, error) {
 		return 0, err
 	}
 
-	_, err = w.Write(buffer)
+	wrote, err := w.Write(buffer)
 	if err != nil {
 		return 0, err
+	}
+
+	if wrote != bufferLength {
+		return 0, io.ErrShortWrite
 	}
 
 	return lengthSize + bufferLength, nil
