@@ -2,6 +2,7 @@ package ioutil
 
 import (
 	"encoding/binary"
+	"fmt"
 	"io"
 	"time"
 )
@@ -16,7 +17,7 @@ func ReadUint8(r io.Reader) (uint8, error) {
 	}
 
 	if read != 1 {
-		return 0, io.ErrUnexpectedEOF
+		return 0, fmt.Errorf("read %d != 1", read)
 	}
 
 	return uint8(buffer[0]), nil
@@ -32,7 +33,7 @@ func ReadUint16(r io.Reader) (uint16, error) {
 	}
 
 	if read != 2 {
-		return 0, io.ErrUnexpectedEOF
+		return 0, fmt.Errorf("read %d != 2", read)
 	}
 
 	return binary.BigEndian.Uint16(buffer), nil
@@ -48,7 +49,7 @@ func ReadUint32(r io.Reader) (uint32, error) {
 	}
 
 	if read != 4 {
-		return 0, io.ErrUnexpectedEOF
+		return 0, fmt.Errorf("read %d != 4", read)
 	}
 
 	return binary.BigEndian.Uint32(buffer), nil
@@ -64,7 +65,7 @@ func ReadUint64(r io.Reader) (uint64, error) {
 	}
 
 	if read != 8 {
-		return 0, io.ErrUnexpectedEOF
+		return 0, fmt.Errorf("read %d != 8", read)
 	}
 
 	return binary.BigEndian.Uint64(buffer), nil
@@ -78,6 +79,10 @@ func ReadString(r io.Reader) (string, error) {
 		return "", err
 	}
 
+	if size == 0 {
+		return "", nil
+	}
+
 	buffer := make([]byte, int(size))
 	read, err := r.Read(buffer)
 	if err != nil {
@@ -85,7 +90,7 @@ func ReadString(r io.Reader) (string, error) {
 	}
 
 	if read != int(size) {
-		return "", io.ErrUnexpectedEOF
+		return "", fmt.Errorf("read %d < %d", read, int(size))
 	}
 
 	return string(buffer), nil
