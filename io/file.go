@@ -98,7 +98,7 @@ func EnsureDir(dir string) error {
 		return err
 	}
 
-	return os.Mkdir(dir, 0666)
+	return os.Mkdir(dir, 0755)
 }
 
 // OpenForWrite 打开文件以便写入
@@ -111,7 +111,7 @@ func OpenForWrite(filePath string) (*os.File, error) {
 	}
 
 	//	打开文件
-	return os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY, 0666)
+	return os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY, 0660)
 }
 
 // OpenForRead 打开文件一遍读取
@@ -123,7 +123,7 @@ func OpenForRead(filePath string) (*os.File, error) {
 	}
 
 	//	打开文件
-	return os.OpenFile(filePath, os.O_RDONLY, 0666)
+	return os.OpenFile(filePath, os.O_RDONLY, 0660)
 }
 
 // ReadLines 从文件中读取字符串数组
