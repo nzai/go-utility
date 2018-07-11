@@ -133,12 +133,12 @@ func (r BinaryReader) Float64() (float64, error) {
 
 // String 读取字符串
 func (r BinaryReader) String() (string, error) {
-	size, err := r.UInt32()
+	size, err := r.Int()
 	if err != nil {
 		return "", err
 	}
 
-	buffer := make([]byte, int(size))
+	buffer := make([]byte, size)
 	_, err = r.Read(buffer)
 	if err != nil {
 		return "", err

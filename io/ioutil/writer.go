@@ -44,7 +44,7 @@ func (w BinaryWriter) UInt16(value uint16) error {
 	buffer := make([]byte, 2)
 	w.order.PutUint16(buffer, value)
 
-	_, err := w.Write([]byte{byte(value)})
+	_, err := w.Write(buffer)
 	return err
 }
 
@@ -53,7 +53,7 @@ func (w BinaryWriter) UInt32(value uint32) error {
 	buffer := make([]byte, 4)
 	w.order.PutUint32(buffer, value)
 
-	_, err := w.Write([]byte{byte(value)})
+	_, err := w.Write(buffer)
 	return err
 }
 
@@ -62,7 +62,7 @@ func (w BinaryWriter) UInt64(value uint64) error {
 	buffer := make([]byte, 8)
 	w.order.PutUint64(buffer, value)
 
-	_, err := w.Write([]byte{byte(value)})
+	_, err := w.Write(buffer)
 	return err
 }
 
@@ -104,8 +104,7 @@ func (w BinaryWriter) Float64(value float64) error {
 // String 写入字符串
 func (w BinaryWriter) String(value string) error {
 	buffer := []byte(value)
-	bufferLength := len(buffer)
-	err := w.UInt32(uint32(bufferLength))
+	err := w.Int(len(buffer))
 	if err != nil {
 		return err
 	}
