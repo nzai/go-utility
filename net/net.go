@@ -2,7 +2,6 @@ package net
 
 import (
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -12,6 +11,13 @@ import (
 	gio "github.com/nzai/go-utility/io"
 )
 
+const (
+	// DefaultRetries 缺省重试次数
+	DefaultRetries = 3
+	// DefaultRetryInterval 缺省重试间隔
+	DefaultRetryInterval = time.Second * 10
+)
+
 // DownloadString 发送GET请求并返回字符串
 func DownloadString(url string) (string, error) {
 	return DownloadStringReferer(url, "")
@@ -19,7 +25,7 @@ func DownloadString(url string) (string, error) {
 
 // DownloadStringReferer 发送GET请求并返回字符串(带Referer)
 func DownloadStringReferer(url, referer string) (string, error) {
-	return DownloadStringRefererRetry(url, referer, 1, 0)
+	return DownloadStringRefererRetry(url, referer, DefaultRetries, DefaultRetryInterval)
 }
 
 // DownloadStringRetry 访问网址并返回字符串
@@ -41,7 +47,7 @@ func DownloadBuffer(url string) ([]byte, error) {
 
 // DownloadBufferReferer 发送GET请求并返回缓冲区(带Referer)
 func DownloadBufferReferer(url, referer string) ([]byte, error) {
-	return DownloadBufferRefererRetry(url, referer, 1, 0)
+	return DownloadBufferRefererRetry(url, referer, DefaultRetries, DefaultRetryInterval)
 }
 
 // DownloadBufferRetry 访问网址并返回缓冲区
@@ -87,13 +93,15 @@ func DownloadBufferRefererOnce(url, referer string) ([]byte, error) {
 	}
 
 	//	发送请求
-	client := &http.Client{}
-	//	client.Timeout = time.Second * 20
-	response, err := client.Do(request)
+	response, err := http.DefaultClient.Do(request)
 	if err != nil {
 		return nil, err
 	}
 	defer response.Body.Close()
+
+	if response.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("status code: %d, text: %s", response.StatusCode, http.StatusText(response.StatusCode))
+	}
 
 	//	读取结果
 	return ioutil.ReadAll(response.Body)
@@ -117,7 +125,7 @@ func DownloadFileRetry(url, path string, retryTimes int, interval time.Duration)
 // DownloadFileRefererRetry 下载文件
 func DownloadFileRefererRetry(url, referer, path string, retryTimes int, interval time.Duration) error {
 
-	err := fmt.Errorf("ok")
+	var err error
 	tempPath := path + ".downloading"
 	for times := retryTimes - 1; times >= 0; times-- {
 
@@ -144,27 +152,11 @@ func DownloadFileRefererRetry(url, referer, path string, retryTimes int, interva
 
 //	下载文件
 func downloadFileRefererOnce(url, referer, path string) error {
-	//	构造请求
-	request, err := http.NewRequest("GET", url, nil)
+
+	buffer, err := DownloadBufferRefererOnce(url, referer)
 	if err != nil {
 		return err
 	}
-
-	//	引用页
-	if referer != "" {
-		request.Header.Set("Referer", referer)
-	}
-
-	//	发送请求
-	client := &http.Client{}
-	//	client.Timeout = time.Second * 15
-	response, err := client.Do(request)
-	if err != nil {
-		return err
-	}
-	defer response.Body.Close()
-
-	//	tempPath := path + ".downloading"
 
 	//	打开文件
 	file, err := gio.OpenForWrite(path)
@@ -174,6 +166,6 @@ func downloadFileRefererOnce(url, referer, path string) error {
 	defer file.Close()
 
 	//	写文件
-	_, err = io.Copy(file, response.Body)
+	_, err = file.Write(buffer)
 	return err
 }
