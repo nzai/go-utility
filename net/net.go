@@ -18,6 +18,21 @@ const (
 	DefaultRetryInterval = time.Second * 10
 )
 
+// ResponseError 网络错误
+type ResponseError struct {
+	StatusCode int
+}
+
+// NewResponseError 新建网络错误
+func NewResponseError(statusCode int) *ResponseError {
+	return &ResponseError{StatusCode: statusCode}
+}
+
+// Error 错误信息
+func (e ResponseError) Error() string {
+	return fmt.Sprintf("code: %d  text: %s", e.StatusCode, http.StatusText(e.StatusCode))
+}
+
 // DownloadString 发送GET请求并返回字符串
 func DownloadString(url string) (string, error) {
 	return DownloadStringReferer(url, "")
@@ -66,6 +81,12 @@ func DownloadBufferRefererRetry(url, referer string, retryTimes int, interval ti
 			return buffer, err
 		}
 
+		// 如果是http response error就不重试了
+		_, ok := err.(ResponseError)
+		if ok {
+			return nil, err
+		}
+
 		if times > 0 {
 			if err != nil {
 				log.Printf("访问%s出错，还有%d次重试机会，%d秒后重试:%s", url, times, int64(interval.Seconds()), err.Error())
@@ -100,7 +121,7 @@ func DownloadBufferRefererOnce(url, referer string) ([]byte, error) {
 	defer response.Body.Close()
 
 	if response.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("status code: %d, text: %s", response.StatusCode, http.StatusText(response.StatusCode))
+		return nil, NewResponseError(response.StatusCode)
 	}
 
 	//	读取结果
