@@ -82,7 +82,7 @@ func DownloadBufferRefererRetry(url, referer string, retryTimes int, interval ti
 		}
 
 		// 如果是http response error就不重试了
-		_, ok := err.(ResponseError)
+		_, ok := err.(*ResponseError)
 		if ok {
 			return nil, err
 		}
